@@ -10,7 +10,6 @@ class RabbitMQConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     exports = "FindRabbitmqc.cmake"
     default_options = "shared=True", "fPIC=True"
-    requires = ("openssl/1.0.2n@conan/stable")
     generators = "cmake"
     unzipped_name = "rabbitmq-c-%s" % version
     zip_name = "%s.tar.gz" % unzipped_name
@@ -18,6 +17,12 @@ class RabbitMQConan(ConanFile):
     def config_options(self):
         if self.settings.os == "Windows":
             self.options.remove("fPIC")
+
+    def requirements(self):
+        if self.settings.os == "Windows":
+            self.requires("openssl/1.0.2n@conan/stable")
+        else:
+            self.requires("OpenSSL/1.0.2n@conan/stable")
 
     def source(self):
         url = "https://github.com/alanxz/rabbitmq-c/releases/download/v%s/%s" % (self.version, self.zip_name)
@@ -52,7 +57,10 @@ endif()""", "")
         cmake = CMake(self)
 
         # Use dependency version of openssl
-        openssl_root_dir = self.deps_cpp_info["openssl"].rootpath
+        if self.settings.os == "Windows":
+            openssl_root_dir = self.deps_cpp_info["openssl"].rootpath
+        else:
+            openssl_root_dir = self.deps_cpp_info["OpenSSL"].rootpath
         cmake.definitions['OPENSSL_ROOT_DIR'] = openssl_root_dir
         cmake.definitions['BUILD_EXAMPLES'] = "OFF"  # Don't need to build examples
         cmake.definitions['BUILD_TESTS'] = "OFF"  # Don't need to build tests
